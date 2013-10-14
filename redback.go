@@ -144,6 +144,9 @@ func main() {
             // What?
             fmt.Println("Unknown type for", key)
         }
+        
+        // Check TTL
+        checkttl(key, srcc, destc);
     }
     
     // Done
@@ -152,6 +155,18 @@ func main() {
     // Cleanup
     srcc.Close()
     destc.Close()
+}
+
+// Check for key expiration and set expiry. This is a problematic one though, and may be inaccurate for a second at most
+// (but I'm pretty confident it'll hardly reach that, since one command will just take a couple of ms)
+func checkttl(key string, src, dst redis.Conn) {
+    ttl, _ := redis.Int(src.Do("TTL", key))
+    
+    // Expire the key if it's greater than 0
+    if ttl > 0 {
+        fmt.Println("Setting expiration of", key)
+        dst.Do("EXPIRE", key, ttl)
+    }
 }
 
 // For usage
