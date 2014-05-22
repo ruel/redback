@@ -12,16 +12,18 @@ func main() {
     
     // Vars
     var src, dest string
-    var sp, dp, tc, tr, tw int
+    var sdb, ddb, sp, dp, tc, tr, tw int
     
     // Flag declaration
     // For source
     flag.StringVar(&src, "src", "127.0.0.1", "Source redis server hostname")
     flag.IntVar(&sp, "sp", 6379, "Source redis server port")
+    flag.IntVar(&sdb, "sdb", 0, "Source redis db number")
     
     // For destination
     flag.StringVar(&dest, "dest", "none", "Destination redis server hostname")
     flag.IntVar(&dp, "dp", 6379, "Destination redis server port")
+    flag.IntVar(&ddb, "ddb", 0, "Destination redis db number")
     
     // Timeouts
     flag.IntVar(&tc, "tc", 10, "Connection timeout in seconds")
@@ -63,6 +65,10 @@ func main() {
         fmt.Fprintf(os.Stderr, "Cannot connect to destination redis server: %v\n", err)
         os.Exit(-1)
     }
+
+    // Select DBs
+    srcc.Do("SELECT", sdb)
+    destc.Do("SELECT", ddb)
     
     // Go through each keys in source
     srckeys, _ := redis.Strings(srcc.Do("KEYS", "*"))
@@ -171,7 +177,7 @@ func checkttl(key string, src, dst redis.Conn) {
 
 // For usage
 func usage() {
-    fmt.Fprintf(os.Stderr, "Usage: redback [-src <source-host>] [-sp <source-port>] -dest <destination-host> [-dp <destination-port>]\n")
+    fmt.Fprintf(os.Stderr, "Usage: redback [-src <source-host>] [-sp <source-port>] [-sdb <source-db>] -dest <destination-host> [-dp <destination-port>] [-ddb <destination-db>]\n")
     flag.PrintDefaults()
     os.Exit(2)
 }
